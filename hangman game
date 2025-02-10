@@ -1,0 +1,127 @@
+import random
+import tkinter as tk
+from tkinter import messagebox
+
+# Function to choose a random word
+def choose_word():
+    words = ["python", "hangman", "challenge", "programming", "computer", "algorithm"]
+    return random.choice(words)
+
+# Initialize the game
+def initialize_game():
+    global word, guessed_letters, attempts_left
+    word = choose_word()
+    guessed_letters = set()
+    attempts_left = 6
+    canvas.delete("all")
+    draw_hangman(attempts_left)
+    update_display()
+
+# Update the display with the current state of the game
+def update_display():
+    # Update the word display
+    word_display = " ".join([letter if letter in guessed_letters else "_" for letter in word])
+    word_label.config(text=word_display)
+
+    # Update the attempts left
+    attempts_label.config(text=f"Attempts left: {attempts_left}")
+
+    # Update the guessed letters
+    guessed_label.config(text=f"Guessed letters: {', '.join(sorted(guessed_letters))}")
+
+# Draw the hangman based on remaining attempts
+def draw_hangman(attempts):
+    # Base
+    if attempts <= 5:
+        canvas.create_line(20, 180, 180, 180, width=3)  # Base
+    if attempts <= 4:
+        canvas.create_line(100, 180, 100, 20, width=3)  # Pole
+    if attempts <= 3:
+        canvas.create_line(100, 20, 150, 20, width=3)  # Top bar
+    if attempts <= 2:
+        canvas.create_line(150, 20, 150, 50, width=3)  # Rope
+    if attempts <= 1:
+        canvas.create_oval(130, 50, 170, 90, width=3)  # Head
+    if attempts == 0:
+        canvas.create_line(150, 90, 150, 130, width=3)  # Body
+        canvas.create_line(150, 100, 130, 120, width=3)  # Left arm
+        canvas.create_line(150, 100, 170, 120, width=3)  # Right arm
+        canvas.create_line(150, 130, 130, 160, width=3)  # Left leg
+        canvas.create_line(150, 130, 170, 160, width=3)  # Right leg
+
+# Handle a letter guess
+def guess_letter():
+    guess = entry.get().lower()
+    entry.delete(0, tk.END)  # Clear the input field
+
+    if not guess.isalpha() or len(guess) != 1:
+        messagebox.showwarning("Invalid Input", "Please enter a single letter.")
+        return
+
+    if guess in guessed_letters:
+        messagebox.showinfo("Already Guessed", "You've already guessed that letter.")
+        return
+
+    guessed_letters.add(guess)
+
+    if guess not in word:
+        global attempts_left
+        attempts_left -= 1
+        draw_hangman(attempts_left)
+        if attempts_left == 0:
+            messagebox.showinfo("Game Over", f"You lost! The word was '{word}'.")
+            initialize_game()
+            return
+    else:
+        if all(letter in guessed_letters for letter in word):
+            messagebox.showinfo("Congratulations", "You guessed the word!")
+            initialize_game()
+            return
+
+    update_display()
+
+# Create the main window
+root = tk.Tk()
+root.title("Hangman Game")
+root.geometry("400x500")
+root.config(bg="#f0f0f0")
+
+# Top frame for the word display
+word_frame = tk.Frame(root, bg="#f0f0f0")
+word_frame.pack(pady=20)
+
+word_label = tk.Label(word_frame, text="", font=("Arial", 24), bg="#f0f0f0")
+word_label.pack()
+
+# Canvas for the hangman drawing
+canvas = tk.Canvas(root, width=200, height=200, bg="white", highlightthickness=2, highlightbackground="black")
+canvas.pack(pady=10)
+
+# Middle frame for game info
+info_frame = tk.Frame(root, bg="#f0f0f0")
+info_frame.pack(pady=10)
+
+attempts_label = tk.Label(info_frame, text="", font=("Arial", 16), bg="#f0f0f0")
+attempts_label.pack()
+
+guessed_label = tk.Label(info_frame, text="", font=("Arial", 14), bg="#f0f0f0")
+guessed_label.pack(pady=5)
+
+# Bottom frame for input and buttons
+input_frame = tk.Frame(root, bg="#f0f0f0")
+input_frame.pack(pady=20)
+
+entry = tk.Entry(input_frame, font=("Arial", 14), width=5, justify="center")
+entry.grid(row=0, column=0, padx=5)
+
+guess_button = tk.Button(input_frame, text="Guess", font=("Arial", 14), command=guess_letter, bg="#4CAF50", fg="white", width=10)
+guess_button.grid(row=0, column=1, padx=5)
+
+restart_button = tk.Button(root, text="Restart", font=("Arial", 14), command=initialize_game, bg="#f44336", fg="white", width=15)
+restart_button.pack(pady=10)
+
+# Initialize the game
+initialize_game()
+
+# Run the application
+root.mainloop()
